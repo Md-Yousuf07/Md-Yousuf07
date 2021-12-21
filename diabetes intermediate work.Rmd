@@ -1,0 +1,547 @@
+---
+title: "Pima Indians Diabetes Database"
+author: "Group_B Md Yousuf, Md Asfiyan, Shuaib Abbas, Summerunnisa"
+date: "25/10/2021"
+output: 
+        html_document:
+         df_print: kable
+         theme: lumen
+         toc: yes
+         toc_float: yes
+         code_folding: hide
+         highlight: zenburn
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,comment = FALSE,cache = TRUE)
+	
+```
+
+<style>
+#TOC {
+  font-size: 16px;
+  font-family: Bookman Old Style;
+  color: darkblue; 
+}
+p {
+    font-size: 18px;
+    font-family: Bookman Old Style;
+    line-height: 24px;
+    margin: 0px 0px 12px 0px;
+    text-align:justify;
+}
+h1 {
+    text-align: center;
+    font-family: Bookman Old Style;
+    font-size: 24px;
+    font-weight: bold;
+    color: maroon;
+}
+h2, h3, h4, h5, h6, legend {
+    font-family: Bookman Old Style;
+    font-size: 18px;
+    font-weight: bold;
+    color: darkgreen;
+}
+</style>
+
+## Content of diabetes dataset
+  
+  Analysizing Pima Indians Diabetes dataset is originally from Kaggle (*https://www.kaggle.com/uciml/pima-indians-diabetes-database*). In particular, all patients here are females at least 21 years old of Pima Indian heritage.Pima, North American Indians who traditionally lived along the Gila and Salt rivers in Arizona, U.S.
+     
+  From this diabetes dataset we find out that the dataset consists of several medical predictor variables and one target variable, Outcome. Predictor variables includes the number of pregnancies the patient, their BMI, insulin level, age, DiabetesPedigreeFunction ,Glucose, BloodPressure and SkinThickness.
+  
+  Objective of our project is to check which factors affect diabetes in Pima Indian women.
+  
+## Loading "diabetes" data set
+
+***The data set has 768 observation and 9 variables***
+
+```{r}
+diabetes=read.csv("C:/Users/Md Yousuf/Downloads/diabetes.csv",header=T)
+
+```
+
+## Loading Necessary Library
+
+ R packages are a collection of R functions, complied code and sample data. They are stored under a directory called "library" in the R environment.So we have used multiple packages to perform meta data, numerical summary and visual summary.
+
+```{r}
+library(plotly)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(corrplot)
+library(ggpubr)
+library(ggridges)
+library(gridExtra)
+library(corrplot)
+library(GGally)
+```
+
+## MetaData
+
+  Metadata describes about the  data. It provides information about a certain item's content.For example in this data we have created a metadata which includes SNo, Variables, Type of Variables and Visual summary.
+
+```{r}
+library(kableExtra)
+meda1=1:9
+meda2=as.vector(names(diabetes))
+meda3=c("Int","Int","Int","Int","Int","Numeric","Numeric","Int","Int/Factor")
+meda4=c("Boxplot","Histogram","Histogram","Histogram","Histogram","scatter","Histogram","Density","Bar Plot")
+meda=as.data.frame(cbind(meda1,meda2,meda3,meda4))
+colnames(meda)=c("SNo","Variables","Type","VisualSummary")
+
+
+kable(rbind(meda)) %>%   kable_styling()
+```
+
+## Target variable
+  
+  In this dataset the **target variable is Outcome** which is one of the attribute of Pima Indians Diabetes Database of dataset.
+   
+ Outcome is integer type in this dataset but it was identified as factor variable which has only  two levels- 0's & 1's.So changing this attributes as factor from integer.
+  
+  From this attributes,it analysed that for level 0 - no diabetes affects and for level 1 - diabetes affected has assigned.
+ 
+```{r}
+diabetes$Outcome=as.factor(diabetes$Outcome)
+```
+
+## Attributes
+
+### Numeric/integer variables
+  There are  8 attributes are integer & numeric data type.By using this attributes here summarizing the numerical summary.They are:
+  
+  1. *Pregnancies* - Number of times pregnant
+  
+  1. *Glucose* - Plasma glucose concentration a 2 hours in an oral glucose tolerance test
+  
+  1. *BloodPressure* - Diastolic blood pressure (mm Hg)
+  
+  1. *SkinThickness* - Triceps skin fold thickness (mm)
+  
+  1. *Insulin* - 2_Hour serum insulin (mu U/ml)
+  
+  1. *BMI* - Body mass index (weight in kg/(height in m)^2)
+  
+  1. *DiabetesPedigreeFunction* - a function which scores likelihood of diabetes based on family history
+  
+  1. *Age* - Years  
+  
+  
+### Factor variables 
+
+
+ 1.*Outcome* - Targeted variable which defines diabetes affects or not. 0 & 1  
+  
+  
+### Categorising a new variables
+
+  1. *insulin_ml* - Based on the Insulin attribute of this dataset categorized the levels in this new variable.
+  
+  1. *bp* - Based on the BloodPressure attribute of this dataset categorized the levels in this new variable.
+  
+  1. *level_glucose* - Based on the Glucose attribute of this dataset categorized the levels in this new variable.
+  
+
+### 1. Categorising the Insulin levels.
+
+ **Insulin normal ml,5.00 uU/mL - 55.00 uU/mL**. 
+
+ As the insulin_ml is factor variable we have changed it to factor.Then we have categorise the insulin levels by mutate function. If the insulin level is lesser than or equal to 5 we have mentioned it as lowml,if the insulin level is greater  than 5 and lesser than or equal to 55.00 we have mentioned it as normalml,if the insulin level is greater than 55.00 we have mentioned it as highml.
+
+
+```{r}
+diabetes=diabetes %>% mutate(insulin_ml=case_when(Insulin<=5.00~"lowml",
+                                                     Insulin>5.00&Insulin<=55.00~"normalml",
+                                                     Insulin>55.00~"highml"))
+diabetes$insulin_ml=as.factor(diabetes$insulin_ml)
+
+
+```
+### 2. Categorising the BloodPressure.
+
+ **Normal BloodPressure 60-80 mm.**
+
+ As the bp is factor variable we have changed it to factor.Then we have categorise the BloodPressure levels by mutate function. If the BloodPressure level is lesser than or equal to 60 we have mentioned it as lowbp,if the BloodPressure is greater  than 60 and lesser than or equal to 80 we have mentioned it as normalbp,if the BloodPressure is greater than 80 we have mentioned it as highbp.
+
+```{r}
+diabetes=diabetes %>% mutate(bp=case_when(BloodPressure<=60~"lowbp",
+                                       BloodPressure>60&BloodPressure<=80~"normalbp",
+                                       BloodPressure>80~"highbp"))
+diabetes$bp=as.factor(diabetes$bp)
+
+
+```
+
+### 3. Categorising the normal range of Glucose.
+
+ **Normal level of Glucose 90 to 110 mg/dL**
+
+ As the level_glucose is factor variable we have changed it to factor.Then we have categorise the  Glucose levels by mutate function. If the  Glucose level is lesser than or equal to 90 we have mentioned it as low,if the  Glucose is greater  than 90 and lesser than or equal to 110 we have mentioned it as normal,if the Glucose is greater than 110 we have mentioned it as high.
+
+```{r}
+diabetes=diabetes %>% mutate(level_glucose=case_when(Glucose<=90~"low",
+                                                     Glucose>90&Glucose<=110~"normal",
+                                                     Glucose>110~"high"))
+diabetes$level_glucose =as.factor(diabetes$level_glucose )
+
+
+
+```
+
+## NUMERICAL SUMMARY
+
+ A numerical summary is a number used to describe a specific characteristic about a data set.
+
+
+### 1. Summary of pregancies based on outcome 
+
+
+```{r}
+data=diabetes %>% group_by(Outcome) %>% summarise(minimum=min(Pregnancies),
+                                                maximum=max(Pregnancies),
+                                                average=mean(Pregnancies),
+                                                 count=n())
+                                            
+                                                
+kable(data) %>%   kable_styling(bootstrap_options = "striped")
+
+```
+we have find out minimun, maximum, average values of pregnancies based on the outcome. From this observation it shows that most of the pregnancies women are affected by diabetes or not.
+
+### 2. Summary of Age based on outcome.
+
+
+```{r}
+data1=diabetes %>% group_by(Outcome) %>% summarise(minimum=min(Age),
+                                                  maximum=max(Age),
+                                                  average=mean(Age),
+                                                  standard_deviation=sd(Age))
+                                                  
+kable(data1) %>%   kable_styling(bootstrap_options = "striped")
+
+```
+we have find out minimun, maximum, average values of age based on the outcome. From this observation it shows that age causes diabetes or not.
+
+
+
+### 3. Summary of insulin based on outcome
+
+
+
+```{r}
+data2=diabetes %>% group_by(Outcome) %>% summarise(minimum=min(Insulin),
+                                                   maximum=max(Insulin),
+                                                   average=mean(Insulin),
+                                                   std_dev=sd(Insulin))
+                                                  
+kable(data2) %>%   kable_styling(bootstrap_options = "striped")
+```
+we have find out minimun, maximum, average and sum of values of Insulin based on the outcome. From this observation it shows that people having high insulin level are affected by diabetes.
+
+
+### 4. Summary of BMI based on outcome
+
+
+
+```{r}
+data3=diabetes %>% group_by(Outcome) %>% summarise(min=min(BMI),
+                                                   max=max(BMI),
+                                                   ave=mean(BMI))
+                                                   
+                                                   
+kable(data3) %>%   kable_styling(bootstrap_options = "striped")
+
+```
+We have find out minimun, maximum, average of BMI based on the outcome.From this observation it shows that high BMI causes diabetes.
+
+### 5. Summary of DiabetesPedigreeFunction based on outcome .
+
+
+```{r}
+data4=diabetes %>% group_by(Outcome) %>% summarise(min=min(DiabetesPedigreeFunction),
+                                                   max=max(DiabetesPedigreeFunction),
+                                                   ave=mean(DiabetesPedigreeFunction))
+                                                  
+kable(data4) %>%   kable_styling(bootstrap_options = "striped")
+
+```
+We have find out minimun, maximum, average values of DiabetesPedigreeFunction based on the outcome. From this observation it shows that DiabetesPedigreeFunction are highly affected by diabetes.
+
+### 6. Summary of Skinthickness based on outcome.
+
+
+```{r}
+data5=diabetes %>% group_by(Outcome) %>% summarise(min=min(SkinThickness),
+                                                   max=max(SkinThickness),
+                                                   ave=mean(SkinThickness),
+                                                   med=median(SkinThickness))
+                                                   
+kable(data5) %>%   kable_styling(bootstrap_options = "striped")
+
+```
+We have find out minimun, maximum, average and median values of SkinThickness based on the outcome. From this observation it shows that SkinThickness are not highly affected by diabetes when compared to non diabetes.Diabetes is caused by skin thickness.
+
+
+### 7. Summary of Glucose based on outcome.
+
+
+```{r}
+data6=diabetes %>% group_by(Outcome) %>% summarise(min=min(Glucose),
+                                                   max=max(Glucose),
+                                                   ave=mean(Glucose))
+                                                   
+                                                   
+kable(data6) %>%   kable_styling(bootstrap_options = "striped")
+```
+ we have find out minimun, maximum, average  values of Glucose based on the outcome. From this observation it shows that  Glucose level are affected by diabetes.
+
+
+## VISUAL SUMMARY
+
+### single numeric with factor variable
+
+
+### 1. Pregnancies Vs Outcomes
+
+
+```{r}
+
+plot_ly(diabetes, x = ~Pregnancies, type = 'histogram',color=~Outcome,stroke=I('blue'))
+```
+
+ *From this analysis, there is a less chances in affecting diabetes when there is a less Pregnancies rate.*
+ 
+ *Whereas, there is high chances in affecting diabetes when there is a more Pregnancies rate.*
+
+  
+
+### 2. SkinThickness Vs Outcomes
+
+```{r}
+plot_ly(diabetes, x = ~SkinThickness, type = 'histogram',color=~Outcome,stroke=I('blue'))
+```
+
+ *From this analysis, There is a less chances of affecting diabetes if the skinthickness value is greater than 40,whereas if the skinthickness value are between 0 and 40 are not affected more*
+  
+
+### 3. BMI Vs Outcomes
+
+```{r}
+plot_ly(diabetes, y = ~BMI, type = "box",color=~Outcome,stroke=I('blue'))
+```
+
+ *From this analysis,It shows that women having high BMI rate are more affected by diabetes*
+ 
+
+### 4. DiabetesPedigreeFunction Vs Outcomes
+
+
+```{r}
+plot_ly(diabetes, x = ~DiabetesPedigreeFunction, type = "histogram",color=~Outcome,stroke=I('green'))
+```
+ 
+ *From this analysis,if the DiabetesPedigreeFunction increases from 0-0.75 than there is a high chance of diabetes.If the DiabetesPedigreeFunction is greater than 0.75 than there is a less chance of diabetes.*
+ 
+
+### 5. Age Vs Outcomes
+
+```{r}
+d1 <- diabetes %>% filter(Outcome=="0") %>% droplevels()
+density1 <- density(d1$Age)
+
+d2 <- diabetes %>% filter(Outcome=="1") %>% droplevels()
+density2 <- density(d2$Age)
+
+original_plot1 <- plot_ly(x = ~density1$x, 
+               y = ~density1$y, 
+               type = 'scatter',
+               mode = 'lines',
+               name = 'Outcome==0', 
+               fill = 'tozeroy')
+final_plot <- original_plot1 %>% add_trace(x = ~density2$x,
+                         y = ~density2$y,
+                         name = 'Outcome==1',
+                         fill = 'tozeroy')
+final_plot
+```
+
+ *From this analysis,there is a chance of affecting diabetes in the middle order age.Whereas there is a less chance of affecting diabetes in the initial age*
+  
+### More than one numeric with factor variable
+
+### 1. Pregnancies Vs Glucose based on Outcome
+
+```{r}
+plot_ly(diabetes, 
+               x = ~Pregnancies,
+               y= ~Glucose,
+               color=~Outcome,
+               type = "scatter",
+              colors='Set1', mode='markers'
+               ) %>% 
+  layout(title = 'Pregnancies and Glucose based on Outcome',xaxis = list(title= "Pregnancies"),yaxis = list(title = "Glucose"))
+```
+  *From the analysis, the pregnancies ladies affects the diabetes when the glucose level is high.If the glucose level is in normal than they does not affects with diabetes.*
+
+### 2. Pregnancies Vs Insulin based on Outcomes
+
+
+```{r}
+plot_ly(diabetes, 
+               x = ~Pregnancies,
+               y= ~Insulin,
+               color=~Outcome,
+               type = "scatter",
+              colors='Set1', mode='markers'
+               ) %>% 
+  layout(title = 'Pregnancies and Insulin based on Outcome',xaxis = list(title= "Pregnancies"),yaxis = list(title = "Insulin"))
+```
+  *From the analysis, Pregnancies Vs Insulin based on Outcomes if the pregnancies and insulin level is high then it affects the diabetes.*
+  
+
+### 3. Pregnancies Vs DiabetesPedigreeFunction based on Outcomes
+
+
+```{r}
+plot_ly(diabetes, 
+               x = ~Pregnancies,
+               y= ~DiabetesPedigreeFunction,
+               color=~Outcome,
+               type = "scatter",
+              colors='Set1', mode='markers'
+               ) %>% 
+  layout(title = 'Pregnancies and DiabetesPedigreeFunction based on Outcome',xaxis = list(title= "Pregnancies"),yaxis = list(title = "DiabetesPedigreeFunction"))
+```
+
+ *From the analysis Pregnancies and DiabetesPedigreeFunction based on Outcome is most equally affects with diabetes.DiabetesPedigreeFunction comes under family history.*
+
+### 4. Pregnancies Vs Age based on Outcomes
+
+```{r}
+diabetes%>%
+  group_by(Outcome) %>%
+  do(p=plot_ly(., x = ~Age, y = ~Pregnancies, color = ~Outcome,colors="Set1",
+               type = "scatter",mode='markers')) %>%
+  subplot(nrows = 1, shareX = TRUE, shareY = TRUE)
+```
+
+
+  *From the analysis,we cannot see any difference in diabetes based on pregnancies and age.* 
+  
+### 5. Pregnancies Vs BloodPressure based on Outcomes
+
+```{r}
+plot_ly(diabetes, 
+               x = ~Pregnancies,
+               y= ~BloodPressure,
+               color=~Outcome,
+               type = "scatter",
+              colors='Set1', mode='markers'
+               ) %>% 
+  layout(title = 'Pregnancies and BloodPressure based on Outcome',xaxis = list(title= "Pregnancies"),yaxis = list(title = "BloodPressure"))
+```
+  *From the analysis, Pregnancies and BloodPressure based on Outcome is most equally affects with diabetes.*
+
+### 5. Pregnancies Vs BMI based on Outcomes
+
+```{r}
+plot_ly(diabetes, 
+               x = ~Pregnancies,
+               y= ~BMI,
+               color=~Outcome,
+               type = "scatter",
+              colors='Set1', mode='markers'
+               ) %>% 
+  layout(title = 'Pregnancies and BMI based on Outcome',xaxis = list(title= "Pregnancies"),yaxis = list(title = "BMI"))
+```
+  *From the analysis, Pregnancies Vs BMI based on Outcomes if the pregnancies and BMI rate is high it affects diabetes.*
+
+### 7. Pregnancies Vs SkinThickness based on Outcomes
+
+```{r}
+diabetes%>%
+  group_by(Outcome) %>%
+  do(p=plot_ly(., x = ~Pregnancies , y = ~SkinThickness, color = ~Outcome,colors="Set1",
+               type = "scatter",mode='markers')) %>%
+  subplot(nrows = 1, shareX = TRUE, shareY = TRUE)
+```
+
+ *From the analysis, Pregnancies Vs SkinThickness based on Outcomes it does not affect more diabetes.*
+
+### More than one Factor variable
+
+### 1. level_glucose Vs Outcome
+
+
+```{r}
+diabetes %>%
+  count(level_glucose,Outcome) %>% 
+  plot_ly(x=~Outcome,y=~n,color=~level_glucose,type='bar')
+```
+ *From the analysis, level_glucose vs outcome ,low glucose and normal glucose level is less affected, high glucose level is highly affected.*
+
+
+### 2. bp vs Outcome 
+
+```{r}
+diabetes %>%
+  count(bp,Outcome) %>% 
+  plot_ly(x=~bp,y=~n,color=~Outcome,type='bar')
+```
+ *From the analysis, bp vs outcome diabetes is not highly affected by bp.*
+
+### 3. insulin_ml Vs Outcome
+
+```{r}
+diabetes %>%
+  count(insulin_ml,Outcome) %>% 
+  plot_ly(x=~insulin_ml,y=~n,color=~Outcome,type='bar')
+```
+  *From the analysis, insulin_ml vs outcome diabetes is not highly affected by insulin_ml.*
+
+
+## Analysis diabetes in Multiple plots using facet
+
+```{r}
+diabetes%>%
+  group_by(Outcome) %>%
+  do(p=plot_ly(., x = ~BMI, y = ~DiabetesPedigreeFunction, color = ~Outcome,colors="Set1",
+               type = "scatter",mode='markers')) %>%
+  subplot(nrows = 1, shareX = TRUE, shareY = TRUE)
+```
+ *From the analysis, BMI Vs DiabetesPedigreeFunction based on outcome, diabetes is not affected.*
+
+
+## Conclusion
+
+   From the analysed of diabetes dataset we find out that the dataset consists of several medical predictor variables and one target variable, Outcome. Predictor variables includes the number of pregnancies the patient, their BMI, insulin level, age, DiabetesPedigreeFunction ,Glucose, BloodPressure and SkinThickness.
+  
+  
+  *Pregnancies*
+    
+    The pregnancies women are affected by diabetes based on their pregnancies rate if it is high then diabetes also highly affects.
+    
+  *Glucose*
+  
+    The Glucose level is normal then the diabetes does not affects the pregnancies women if changes in glucose level there is changes in affects of diabetes.
+    
+   *SkinThickness*
+  
+   The skinthickness value is greater than 40 the diabetes affects less whereas if the skinthickness value are between 0 and 40 are not affected more the diabetes also not affects more.
+   
+   
+  
+  
+  
+  
+  
+  
+  <div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
+  
+  
+  
+  
