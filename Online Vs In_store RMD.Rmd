@@ -1,0 +1,814 @@
+---
+title: "ONLINE vs IN-STORE"
+author: "Group_B,    
+         M.MOHAMED ASFIYAN,   
+         SHUAIB ABBAS,   
+         K.MD.YOUSUF,    
+         H.SUMERUNISA "
+date: "18/11/2021"
+output: 
+        html_document:
+         df_print: kable
+         theme: lumen
+         toc: yes
+         toc_float: yes
+         code_folding: hide
+         highlight: zenburn
+
+---
+
+<style>
+#TOC {
+  font-size: 16px;
+  font-family: Bookman Old Style;
+  color: purple; 
+}
+p {
+    font-size: 18px;
+    font-family: Bookman Old Style;
+    line-height: 24px;
+    margin: 0px 0px 12px 0px;
+    text-align:justify;
+    color: brown;
+}
+h1 {
+    text-align: center;
+    font-family: Bookman Old Style;
+    font-size: 24px;
+    font-weight: bold;
+    color: Darkblue;
+}
+h2 {
+    text-align: center;
+    font-family: Bookman Old Style;
+    font-size: 24px;
+    font-weight: bold;
+    color: purple;
+}
+h3, h4, h5, h6, legend {
+    font-family: Bookman Old Style;
+    font-size: 18px;
+    font-weight: bold;
+    color: maroon;
+}
+</style>
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,comment= "",cache = TRUE)
+```
+
+![](9-94594_online-store-vs-offline-store-hd-png-download.png)
+
+# ONLINE VS IN_STORE SHOPPING 
+
+## INTRODUCTION
+
+  Online shopping has been around for consumers since the mid-1990s and it is currently booming in 21st century. It’s hard to dispute the advantages of online shopping.After all,it has various advantages like time saving, no crowds, more number of  varieties, offers, research and products reviews etc.
+      
+  Despite the many advantages of the online shopping,in-store shopping  still has many benefits and a prominent place in retail.Benefits like personalized experience, try on or test products, instant purchase, interacting people etc.
+  
+   Now a days people's necessity and their basic needs are increasing.So we decided to take a survey towards that, and it helped us to find whether people will prefer online or in-store shopping.We have collected the data using Google forms by publishing in social media. 
+   
+  The data set has 404 observation and 19 variables.
+  
+  We have two target variables here(Online purchase and In-store purchase),The aim of this project is to analyze which variable affects online purchase and In-store purchase.
+  
+  
+  
+ 
+  
+```{r}
+knitr::include_graphics("C:/Users/Md Yousuf/Downloads/analysisplanning.png")
+```
+  
+## DESCRIPTION OF VARIABLES
+
+From the dataset it has 19 variables, 2 variables are target variables. 
+
+1.*ONLINE_PURCHASE*-The number of times a person purchase Online in a week.  
+ 
+2.*IN-STORE_PURCHASE*-The number of times a person purchase In-Store in a week.
+
+For this 17 variables, we have segregated into four levels. They are  Basic,Behavior,Preference and Feedback.
+
+### Basic
+
+ 1.OCCUPATION - A Person’s job or profession.
+ 
+ 2.GENDER - Male, Female Or Transgender.
+ 
+ 3.AGE - Completed Age In Years. 
+ 
+ 4.STATE-State of residence.
+ 
+### Behaviour
+
+ 5.SHOP_MODE - Shopping mode like Online or In-store.
+ 
+ 6.SHOPPING PREFERENCE - A person shopping via website or app.
+ 
+ 7.ONLINE FREQUENCY- A Person's habit of online shopping.
+ 
+ 8.IN-STORE FREQUENCY- A Person's habit of In-store shopping.
+ 
+### Preference
+
+9.DEALS & COMPARISON-Comparison  & Deals Between Online & In-Store Shopping With Its Price.  
+
+10.ONLINE PRODUCTS- Products Purchased Online.
+
+11.IN-STORE PRODUCTS -Products Purchased In-Store.
+
+### Feedback
+
+12.ONLINE SATISFACTION-Levels Of Satisfaction shopping Online. 
+
+13.IN-STORE SATISFACTION-Levels Of Satisfaction shopping In-Store. 
+
+14.ONLINE_REASON- Reason For Shopping Online. 
+
+15.IN-STORE_REASON- Reason For Shopping In-Store.
+
+16.ONLINE RATING-Rating Of Online Shopping by their Purchase.
+
+17.IN-STORE RATING-Rating Of In_Store Shopping by their Purchase.
+
+
+## CATEGORIZING A VARIABLE 
+
+In this project, categorizing three  new variable from existing variable of dataset.Those three variables are States,In_store products and Online products.Whereas existing variables contains more number of levels.But in this new categorized variables has few levels.
+
+```{r}
+library(randomForest)
+library(e1071)
+library(Metrics)
+library(kableExtra)
+library(plotly)
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+library(ggpubr)
+library(ggridges)
+library(gridExtra)
+library(corrplot)
+library(GGally)
+
+# dataset
+
+da=read.csv("C:/Users/Md Yousuf/Downloads/100% accurate shopping.csv",header = T)
+
+
+# converting factor
+da$Occupation=as.factor(da$Occupation)
+da$Gender=as.factor(da$Gender)
+da$shop_mode=as.factor(da$shop_mode)
+da$o_preference=as.factor(da$o_preference)
+da$o_frequency=as.factor(da$o_frequency)
+da$i_frequency=as.factor(da$i_frequency)
+da$deals_comparison=as.factor(da$deals_comparison)
+da$o_products=as.factor(da$o_products)
+da$i_products=as.factor(da$i_products)
+da$o_satisfaction=as.factor(da$o_satisfaction)
+da$i_satisfaction=as.factor(da$i_satisfaction)
+da$o_reason=as.factor(da$o_reason)
+da$i_reason=as.factor(da$i_reason)
+da$o_rating=as.factor(da$o_rating)
+da$i_rating=as.factor(da$i_rating)
+# grouping for state
+da=da %>% 
+  mutate(states=case_when(state=="Tamilnadu"|state=="Kerala"|state=="Andhra Pradesh"|state=="Karnataka"~"South",
+                         state=='Himachal pradesh'|state=='Rajasthan'~"North",TRUE~"Others"))
+da$states=as.factor(da$states)
+# i_product
+da=da %>% 
+  mutate(i_product=case_when(i_products=="Daily essentials"|i_products=="Food items"|i_products=="Medicine"|i_products=="Groceries"~"Eating Items",i_products=="Books"~"Stationaries",TRUE~"Other Items"))
+da$i_product=as.factor(da$i_product)
+# o_product
+da=da %>% 
+  mutate(o_product=case_when(o_products=="Daily essentials"|o_products=="Food items"|o_products=="Medicine"|o_products=="Groceries"~"Eating items",o_products=="Books"|o_products=="Art materials"~"Stationaries",TRUE~"Other Items"))
+da$o_product=as.factor(da$o_product)
+
+
+```
+# SHINY APP 
+ 
+R Shiny app is done to create highly effective numerical summary and visual summary where the user can explore a data set.
+
+# MODELING 
+
+Before subsetting scaling must be done for numeric data of predictor variables.Using sample data from dataset which contains random values.It retains 80% of the data for training the model and remaining test data for prediction.
+
+Modeling is done for all the predictor variables of basic, Behavior, Preference, Feedback.
+
+```{r}
+# scalling
+da$age_s=scale(da$age,center=T,scale=F)
+set.seed(20)
+index=sample(1:nrow(da),0.8*nrow(da))
+
+d_train=da %>% slice(index)
+d_test=da %>% slice(-index)
+
+## Modeling for all predictors
+model_o_a=o_purchase~age_s+Occupation+Gender+o_product+states+shop_mode+o_frequency+deals_comparison+o_reason+o_rating
+model_i_a=i_purchase~age_s+Occupation+Gender+i_product+states+shop_mode+i_frequency+deals_comparison+i_reason+i_rating
+
+## Modeling for Basics Info
+model_o=i_purchase~age_s+Occupation+Gender+states
+model_i=o_purchase~age_s+Occupation+Gender+states
+
+## Modeling for Behavior Info
+
+model_o_bh=i_purchase~shop_mode+o_preference+o_frequency+i_frequency
+model_i_bh=o_purchase~shop_mode+o_preference+o_frequency+i_frequency
+
+## Modeling for Preference info
+model_o_pf=i_purchase~o_product+i_product+deals_comparison
+model_i_pf=o_purchase~o_product+i_product+deals_comparison
+
+## Modeling for Feedback info
+model_o_fb=i_purchase~o_satisfaction+i_satisfaction+o_rating+i_rating+o_reason+i_reason
+model_i_fb=o_purchase~o_satisfaction+i_satisfaction+o_rating+i_rating+o_reason+i_reason
+
+```
+
+# WHITE BOX MODEL
+   
+   Finding the Co-efficients to target variable with all variable of dataset.It means how predictor affects response using co-efficients.
+
+  In white box model,we can see the Co-efficients or weights of the predictors.It uses linear model using linear regression.
+
+  Using confidence intervals,we found out significance of predictors.If predictors are covering zero(0) they are *not significiant* and if predictors not covering zero(0) they are *significiant*.
+  
+## Linear Model_Online & Instore
+     
+  Linear models describe a continuous response variable as a function of one or more predictor variables. They can help you understand and predict the behavior of complex systems or analyze data.
+  
+```{r}
+model_o_1=lm(model_o_a,
+          d_train)
+con_o=round(confint(model_o_1),3)
+kable(rbind(con_o)) %>%   kable_styling()
+```
+
+```{r}
+model_i_1=lm(model_i_a,
+          d_train)
+con_i=round(confint(model_i_1),3)
+kable(rbind(con_i)) %>%   kable_styling()
+```
+
+
+```{r,results='hide'}
+coe=round(as.data.frame(model_o_1$coefficients),3)
+coe
+s=summary(model_o_1)
+```
+
+In Online model,these variables 'OccupationStudent','GenderMale','o_frequencyWeekly'and
+'o_reasonTime efficiency' are  statistically significant.
+
+```{r}
+model_o_1$coefficients[c("GenderMale","OccupationStudent","o_frequencyWeekly","o_reasonTime efficiency")]
+```
+
+
+
+For GenderMale when compared to  the reference category GenderFemale is likely to increase of 3.249 units in the average of online purchase.
+
+For OccupationStudent when compared to the reference category OccupationEmployed is likely to decrease of 5.44 units in the average of online purchase.
+
+For o_frequencyWeekly when compared to the reference category o_frequencyDaily is likely to increase of 6.03 units in the average of online purchase.
+
+For o_reasonTime efficiency when compared to the reference category o_reasonEasy to use is likely to increase of 5.51 units in the average of online purchase.
+```{r,results='hide'}
+coe=round(as.data.frame(model_i_1$coefficients),3)
+coe
+sq=summary(model_i_1)
+```
+
+In In_store model, these variables 'deals_comparisonSometimes' and 'deals_comparisonNot at all' are statistically significant.
+
+```{r}
+model_i_1$coefficients[c("deals_comparisonNot at all","deals_comparisonSometimes")]
+```
+
+
+For deals_comparisonNot at all with the reference category deals_comparisonAlways is likely to increase of 2.277 units in the average of  In_store purchase.
+
+For deals_comparisonSometimes	at all with the reference category deals_comparisonAlways is likely to increase of 0.827 units in the average of  In_store purchase.
+
+## Linear Model_Online For Basic 
+
+```{r,results='hide'}
+model_o_b1=lm(model_o,
+          d_train)
+con1=round(confint(model_o_b1),3)
+kable(rbind(con1)) %>%   kable_styling()
+```
+Here, only occupation 'Self-employed' are significant. Remaining all other variables are statistically in-significant.
+
+
+```{r,results='hide'}
+coe1=round(as.data.frame(model_o_b1$coefficients),3)
+coe1
+s1=summary(model_o_b1)
+```
+
+Based on Occupation 'Self-Employed', Homemaker will likely to increase o_purchase by 1.518  units,
+
+For occupation 'Retired' will increase o_purchase by 1.095 units, For self-employed will increase o_purchase by 2.015 units , For student will decrease o_purchase by 0.296 units.
+
+
+## Linear Model_Online For Behaviour 
+
+```{r,results='hide'}
+model_o_bh1=lm(model_o_bh,
+          d_train)
+con2=round(confint(model_o_bh1),3)
+kable(rbind(con2)) %>%   kable_styling()
+```
+Here, all variables are statistically in-significant.
+
+```{r,results='hide'}
+coe2=round(as.data.frame(model_o_bh1$coefficients),3)
+coe2
+s2=summary(model_o_bh1)
+```
+Compare to reference category o-frequency 'Sometimes' ,o-frequency 'Weekly' will increase o_purchase by 2.146 units.
+
+## Linear Model_Online For Preference 
+```{r,results='hide'}
+model_o_pf1=lm(model_o_pf,
+               d_train)
+con3=round(confint(model_o_pf1),3)
+kable(rbind(con3)) %>%   kable_styling()
+```
+Here, Deals comparison 'Not at all' only are significant. All others are in-significant.
+
+```{r,results='hide'}
+coe3=round(as.data.frame(model_o_pf1$coefficients),3)
+coe3
+s3=summary(model_o_pf1)
+```
+Compare to reference category Deals & Comparison'Sometimes' , Deals & Comparison'Sometimes' will increase o_purchase by 2.240 units.
+
+## Linear Model_Online For Feedback
+
+```{r,results='hide'}
+model_o_fb1=lm(model_o_fb,
+               d_train)
+con4=round(confint(model_o_fb1),3)
+kable(rbind(con4)) %>%   kable_styling()
+```
+Here, online rating 'good','More variety of products', & 'interacting with people' are significant. Remaining all are in-signficant...
+
+
+```{r,results='hide'}
+coe4=round(as.data.frame(model_o_fb1$coefficients),3)
+coe4
+s4=summary(model_o_fb1)
+```
+Compare to reference category Ratings , o-rating 'good' will increase o_purchase by 1.760 units.
+
+
+## Linear Model_In_Store For Basic 
+
+```{r,results='hide'}
+model_i_b1=lm(model_i,
+           d_train)
+con5=round(confint(model_i_b1),)
+kable(rbind(con5)) %>%   kable_styling()
+```
+Here, Occupation 'student' & Gender 'male' only are significant. Remaining all variables are statistically in-significant.
+
+
+```{r,results='hide'}
+coe5=round(as.data.frame(model_i_b1$coefficients),3)
+coe5
+s5=summary(model_i_b1)
+```
+Compare to reference category Gender'Female' , Gender'Male' will increase o_purchase by 3.007 units.
+
+
+## Linear Model_In_Store For Behaviour 
+
+```{r,results='hide'}
+model_i_bh1=lm(model_i_bh,
+           d_train)
+con6=round(confint(model_i_bh1),)
+kable(rbind(con6)) %>%   kable_styling()
+```
+Here, o-frequency 'Weekly',i-frequence 'Monthly', 'Occasionally' & 'weekly' are significant. Remaining are all in-significant.
+
+
+```{r,results='hide'}
+coe6=round(as.data.frame(model_i_b1$coefficients),3)
+coe6
+s6=summary(model_i_bh1)
+```
+Compare to reference category Occupation 'Employed' , occupation 'Self-employed' will increase o_purchase by 1.520 units.
+
+## Linear Model_In_Store For Preference 
+
+```{r,results='hide'}
+model_i_pf1=lm(model_i_pf,
+               d_train)
+con7=round(confint(model_i_pf1),3)
+kable(rbind(con7)) %>%   kable_styling()
+```
+Here, i-product 'other items' containing clothes and electronics items are significant & Remaining all other variables are in-significant.
+
+```{r,results='hide'}
+coe7=round(as.data.frame(model_i_pf1$coefficients),3)
+coe7
+s7=summary(model_i_pf1)
+```
+Compare to reference category Deals & Comparison, Deals & Comparison'Sometimes' will increase o_purchase by 0.789 units.
+
+## Linear Model_In_store For Feedback
+
+```{r,results='hide'}
+model_i_fb1=lm(model_i_fb,
+               d_train)
+con8=round(confint(model_i_fb1),)
+kable(rbind(con8)) %>%   kable_styling()
+```
+Here, o_satisfaction 'very satisfied',i_satisfaction 'Moderately satisfied',i_satisfaction 'Slightly Satisfied',i_rating 'Very good',i_reason 'Offers' are significant & remaining all the variables are statistically-in significant.
+
+```{r,results='hide'}
+coe8=round(as.data.frame(model_i_fb1$coefficients),3)
+coe8
+s8=summary(model_i_fb1)
+```
+Compare to reference category 'Sometimes' , Deals & Comparison'Sometimes' will increase o_purchase by 0.789 units.
+
+## R-Squared 
+```{r}
+meta2=as.data.frame(cbind(s$r.squared,sq$r.squared,s1$r.squared,s2$r.squared,s3$r.squared,s4$r.squared,s5$r.squared,s6$r.squared,s7$r.squared,s8$r.squared))
+
+colnames(meta2)=c("Rsq_o","Rsq_i","Rsq_o_b","Rsq_i_b","Rsq_o_bh","Rsq_i_bh","Rsq_o_p","Rsq_i_p","Rsq_o_f","Rsq_i_f")
+
+kable(rbind(meta2)) %>%   kable_styling()
+```
+
+# BLACK BOX MODEL
+
+Black box model is to build predictive models.They estimate the relations between the variables but not weights and not much useful for interpretation of weights.In black box model the prediction may be better compared to White box models and evaluation the criterions may not differ.
+
+In black box model uses randomforest and svm.
+
+## Randomforest_online & Randomforest_In-store
+
+A random forest is a machine learning technique that's used to solve regression and classification problems. It utilizes ensemble learning, which is a technique that combines many classifiers to provide solutions to complex problems.
+
+```{r}
+
+model_o_2=randomForest(model_o_a,
+                    d_train)
+
+model_i_2=randomForest(model_i_a,
+                    d_train)
+
+
+```
+
+```{r}
+## Randomforest_o & randomforest_i for basic
+model_o_b2=randomForest(model_o,
+                    d_train)
+
+
+model_i_b2=randomForest(model_i,
+                    d_train)
+
+
+model_o_bh2=randomForest(model_o_bh,
+                    d_train)
+
+
+model_i_bh2=randomForest(model_i_bh,
+                    d_train)
+
+## Randomforest_o & randomforest_i for preference
+
+model_o_pf2=randomForest(model_o_pf,
+                         d_train)
+
+model_i_pf2=randomForest(model_i_pf,
+                         d_train)
+
+
+## Randomforest_o & randomforest_i for feedback
+
+model_o_fb2=randomForest(model_o_fb,
+                         d_train)
+
+model_i_fb2=randomForest(model_i_fb,
+                         d_train)
+```
+
+## Svm_online & svm_Instore
+
+SVM or Support Vector Machine is a linear model for classification and regression problems. It can solve linear and non-linear problems and work well for many practical problems. The idea of SVM is simple: The algorithm creates a line or a hyperplane which separates the data into classes.
+
+```{r}
+model_o_3=svm(o_purchase~age+Occupation+Gender+o_product+i_product+states+shop_mode+o_frequency+i_frequency+deals_comparison+o_reason+i_reason+o_rating+i_rating,
+           d_train)
+model_i_3=svm(o_purchase~age+Occupation+Gender+o_product+i_product+states+shop_mode+o_frequency+i_frequency+deals_comparison+o_reason+i_reason+o_rating+i_rating,
+           d_train)
+
+```
+
+```{r}
+## Svm_o & svm_i for basic
+model_o_b3=svm(model_o,
+           d_train)
+
+model_i_b3=svm(model_i,
+           d_train)
+
+## Svm_o & svm_i for behaviour
+
+
+model_o_bh3=svm(model_o_bh,
+           d_train)
+model_i_bh3=svm(model_i_bh,
+           d_train)
+
+## Svm_o & svm_i for preference
+
+model_o_pf3=svm(model_o_pf,
+                d_train)
+model_i_pf3=svm(model_i_pf,
+                d_train)
+
+## Svm_o & svm_i for feedback
+
+model_o_fb3=svm(model_o_fb,
+                d_train)
+model_i_fb3=svm(model_i_fb,
+                d_train)
+```
+
+## Prediction for models
+
+Predicting the model from test data for white box and black box models.
+
+```{r}
+#LM
+pred_o_1=predict.lm(model_o_1,d_test)
+pred_i_1=predict.lm(model_i_1,d_test)
+
+#RF
+pred_o_2=predict(model_o_2,d_test)
+pred_i_2=predict(model_i_2,d_test)
+
+#SVM
+pred_o_3=predict(model_o_3,d_test)
+pred_i_3=predict(model_i_3,d_test)
+
+```
+
+```{r}
+#Basic
+#LM
+pred_o_b1=predict.lm(model_o_b1,d_test)
+pred_i_b1=predict.lm(model_i_b1,d_test)
+
+#RF
+pred_o_b2=predict(model_o_b2,d_test)
+pred_i_b2=predict(model_i_b2,d_test)
+
+#SVM
+pred_o_b3=predict(model_o_b3,d_test)
+pred_i_b3=predict(model_i_b3,d_test)
+
+## behaviour
+
+#LM
+pred_o_bh1=predict.lm(model_o_bh1,d_test)
+pred_i_bh1=predict.lm(model_i_bh1,d_test)
+
+#RF
+pred_o_bh2=predict(model_o_bh2,d_test)
+pred_i_bh2=predict(model_i_bh2,d_test)
+
+#SVM
+pred_o_bh3=predict(model_o_bh3,d_test)
+pred_i_bh3=predict(model_i_bh3,d_test)
+
+## preference
+#LM
+pred_o_pf1=predict.lm(model_o_pf1,d_test)
+pred_i_pf1=predict.lm(model_i_pf1,d_test)
+
+#RF
+pred_o_pf2=predict(model_o_pf2,d_test)
+pred_i_pf2=predict(model_i_pf2,d_test)
+
+#SVM
+pred_o_pf3=predict(model_o_pf3,d_test)
+pred_i_pf3=predict(model_i_pf3,d_test)
+
+##Feedback
+#LM
+pred_o_fb1=predict.lm(model_o_fb1,d_test)
+pred_i_fb1=predict.lm(model_i_fb1,d_test)
+
+#RF
+pred_o_fb2=predict(model_o_fb2,d_test)
+pred_i_fb2=predict(model_i_fb2,d_test)
+
+#SVM
+pred_o_fb3=predict(model_o_fb3,d_test)
+pred_i_fb3=predict(model_i_fb3,d_test)
+
+```
+
+## RMSE-Root mean square error 
+
+Evaluating the RMSE from the test data which predicted for white and black box model.
+
+```{r}
+r1_o=round(rmse(d_test$o_purchase,pred_o_1),3)
+r2_o=round(rmse(d_test$o_purchase,pred_o_2),3)
+r3_o=round(rmse(d_test$o_purchase,pred_o_3),3)
+
+
+r1_i=round(rmse(d_test$i_purchase,pred_i_1),3)
+r2_i=round(rmse(d_test$i_purchase,pred_i_2),3)
+r3_i=round(rmse(d_test$i_purchase,pred_i_3),3)
+```
+
+```{r}
+#Basic
+r1_o_b1=round(rmse(d_test$o_purchase,pred_o_b1),3)
+r2_o_b2=round(rmse(d_test$o_purchase,pred_o_b2),3)
+r3_o_b3=round(rmse(d_test$o_purchase,pred_o_b3),3)
+
+
+r1_i_b1=round(rmse(d_test$i_purchase,pred_i_b1),3)
+r2_i_b2=round(rmse(d_test$i_purchase,pred_i_b2),3)
+r3_i_b3=round(rmse(d_test$i_purchase,pred_i_b3),3)
+
+## Behaviour
+r1_o_bh1=round(rmse(d_test$o_purchase,pred_o_bh1),3)
+r2_o_bh2=round(rmse(d_test$o_purchase,pred_o_bh2),3)
+r3_o_bh3=round(rmse(d_test$o_purchase,pred_o_bh3),3)
+
+
+r1_i_bh1=round(rmse(d_test$i_purchase,pred_i_bh1),3)
+r2_i_bh2=round(rmse(d_test$i_purchase,pred_i_bh2),3)
+r3_i_bh3=round(rmse(d_test$i_purchase,pred_i_bh3),3)
+
+## Preference
+
+r1_o_pf1=round(rmse(d_test$o_purchase,pred_o_pf1),3)
+r2_o_pf2=round(rmse(d_test$o_purchase,pred_o_pf2),3)
+r3_o_pf3=round(rmse(d_test$o_purchase,pred_o_pf3),3)
+
+
+r1_i_pf1=round(rmse(d_test$i_purchase,pred_i_pf1),3)
+r2_i_pf2=round(rmse(d_test$i_purchase,pred_i_pf2),3)
+r3_i_pf3=round(rmse(d_test$i_purchase,pred_i_pf3),3)
+
+## Feedback
+
+r1_o_fb1=round(rmse(d_test$o_purchase,pred_o_fb1),3)
+r2_o_fb2=round(rmse(d_test$o_purchase,pred_o_fb2),3)
+r3_o_fb3=round(rmse(d_test$o_purchase,pred_o_fb3),3)
+
+
+r1_i_fb1=round(rmse(d_test$i_purchase,pred_i_fb1),3)
+r2_i_fb2=round(rmse(d_test$i_purchase,pred_i_fb2),3)
+r3_i_fb3=round(rmse(d_test$i_purchase,pred_i_fb3),3)
+```
+
+# OVERALL REPORT
+
+```{r}
+S.no=1:3
+
+Models=c("LM","RF","SVM")
+
+RMSE_o=c(r1_o,r2_o,r3_o)
+
+RMSE_i=c(r1_i,r2_i,r3_i)
+
+meta1=as.data.frame(cbind(S.no,Models,RMSE_o,RMSE_i))
+
+colnames(meta1)=c("S.No","Modeling method","RMSE_o","RMSE_i")
+
+kable(rbind(meta1)) %>%   kable_styling()
+
+```
+
+
+## Report basics
+
+```{r}
+S.no=1:3
+
+Models=c("LM","RF","SVM")
+
+RMSE_o=c(r1_o_b1,r2_o_b2,r3_o_b3)
+
+RMSE_i=c(r1_i_b1,r2_i_b2,r3_i_b3)
+
+meta1=as.data.frame(cbind(S.no,Models,RMSE_o,RMSE_i))
+
+colnames(meta1)=c("S.No","Modeling method","RMSE_o","RMSE_i")
+
+kable(rbind(meta1)) %>%   kable_styling()
+```
+
+In report basics, for online products RF(BLACK-BOX MODEL) is better while in in-store products, SVM MODEL is better.
+
+## Report behaviour
+
+```{r}
+S.no=1:3
+
+Models=c("LM","RF","SVM")
+
+RMSE_o=c(r1_o_bh1,r2_o_bh2,r3_o_bh3)
+
+RMSE_i=c(r1_i_bh1,r2_i_bh2,r3_i_bh3)
+
+meta1=as.data.frame(cbind(S.no,Models,RMSE_o,RMSE_i))
+
+colnames(meta1)=c("S.No","Modeling method","RMSE_o","RMSE_i")
+
+kable(rbind(meta1)) %>%   kable_styling()
+```
+
+In report behaviour, for online products Random Forest(BLACK BOX-MODEL) are good, while for in-store products SVM MODEL looks better.
+
+## Report preference
+
+```{r}
+S.no=1:3
+
+Models=c("LM","RF","SVM")
+
+RMSE_o=c(r1_o_pf1,r2_o_pf2,r3_o_pf3)
+
+RMSE_i=c(r1_i_pf1,r2_i_pf2,r3_i_pf3)
+
+meta1=as.data.frame(cbind(S.no,Models,RMSE_o,RMSE_i))
+
+colnames(meta1)=c("S.No","Modeling method","RMSE_o","RMSE_i")
+
+kable(rbind(meta1)) %>%   kable_styling()
+```
+
+In report preference, for online products RF(Black Box Model) shows better, while for in-store products MODEL looks better. 
+
+## Report feedback
+
+```{r}
+S.no=1:3
+
+Models=c("LM","RF","SVM")
+
+RMSE_o=c(r1_o_fb1,r2_o_fb2,r3_o_fb3)
+
+RMSE_i=c(r1_i_fb1,r2_i_fb2,r3_i_fb3)
+
+meta1=as.data.frame(cbind(S.no,Models,RMSE_o,RMSE_i))
+
+colnames(meta1)=c("S.No","Modeling method","RMSE_o","RMSE_i")
+
+kable(rbind(meta1)) %>%   kable_styling()
+
+```
+
+In report feedback, for online products RF-MODEL(BLACK BOX) are better, while for in-store products SVM MODEL fits better.
+
+  
+  
+# FINAL REPORT
+  
+  1. For online purchase, Gender 'Male' shows 3 times greater than 'female' & 'transgender'. 
+  
+  1. Most customer purchase online products 'weekly'.
+  
+  1. Occupation 'self-employed' purchase both online & In-store greater than all other professions.
+  
+  1. Customer generally prefers online shopping, because of 'Time efficiency'.
+  
+  1. Whereas, Customer prefer in-store shopping, because of 'Trustworthy products'.
+  
+  1. For In-store products, rating has been given 'good'.
+  
+  1. Surprisingly, most people does not compare 'deals' between the online & in-store products.
+  
+  1. While in-terms of online ratings, 'good' rating were rated 2 times better than all other      ratings.
+  
+  1. From overall modeling,RF MODEL(BLACK BOX) fits better for online products.Whereas SVM MODEL suits better for In-store products.
+  
+  <span style="color:blue">***From this data analysis, we understood how factors are affecting online and In-store shopping.*** </span> 
+
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
+  
